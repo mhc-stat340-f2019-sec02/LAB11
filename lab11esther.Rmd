@@ -1,0 +1,24 @@
+---
+title: "Lab11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r eda}
+data <- read_csv("class11_LAB_dataFrame_20190930T2158.csv")
+ggplot(data, aes(x = a, y = y)) +
+  geom_point()
+ggplot(data, aes(x = b, y = y)) +
+  geom_point()
+ggplot(data, aes(x = c, y = y)) +
+  geom_point()
+ggplot(data, aes(x = x, y = y)) +
+  geom_point()
+```
+
