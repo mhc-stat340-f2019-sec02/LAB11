@@ -1,0 +1,216 @@
+---
+title: "Lab11"
+author: "Evelyn Zhang"
+date: "10/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Exploratory Data Analysis
+```{r}
+data <- read.csv("./class11_LAB_dataFrame_20190930T2158.csv")
+data
+plot(data$x,data$y)
+plot(data$a,data$y)
+plot(data$b,data$y)
+plot(data$c,data$y)
+# As x increases, y increases, but the relationship is nonlinear. 
+# There is no obvious relationship between y and a
+# y vs b resembles a quadratic relationship
+# As c values increase, y values become more spread out and as c values increase more, y values become closer together again
+```
+
+#### Regression
+```{r}
+model1 <- lm(y~a,data=data)
+plot(data$a,data$y)
+lines(data$a,predict.lm(model1,data.frame(a=data$a)),col='red')
+# y values are concentrated around low a values but there is no obvious relationship shown in the SLR model. 
+```
+
+#### Transforms
+```{r}
+options(repr.plot.width=7*1, repr.plot.height=7)
+par(mfrow=c(2,2))
+transformedX = log(data$a)
+plot(transformedX,data$y,xlab='log(a)',ylab='Y',tck = 0.02)
+model <- lm(y~log(a),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedX
+      ,predictions
+      ,col='red')
+
+transformedX = (data$a)^0.5
+plot(data$a^0.5,data$y,xlab='a^0.5',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.5),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedX
+      ,predictions
+      ,col='red')
+
+transformedX = (data$a)^0.333
+plot(data$a^0.333,data$y,xlab='a^1/3',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.333),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedX
+      ,predictions
+      ,col='red')
+
+transformedX = (data$a)^0.25
+plot(data$a^0.25,data$y,xlab='a^0.25',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.25),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedX
+      ,predictions
+      ,col='red')
+
+#The relasionship between y and a appears more linear. 
+```
+
+
+#### Residuals
+```{r}
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+modelLog <- lm(y~log(a),data=data)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog,breaks=seq(-20,30,2),col='green',,main="log(a)")
+
+modelHalf <- lm(y~I(a^0.5),data=data)
+epsilonsHalf <- residuals(modelHalf)
+hist(epsilonsHalf,breaks=seq(-20,30,2),col='green',main="a^0.50")
+
+
+modelThird <- lm(y~I(a^0.33),data=data)
+epsilonsThird <- residuals(modelThird)
+hist(epsilonsThird,breaks=seq(-20,30,2),col='green',main="a^0.33")
+
+
+modelQuarter <- lm(y~I(a^0.25),data=data)
+epsilonsQuarter <- residuals(modelQuarter)
+hist(epsilonsQuarter,breaks=seq(-20,30,2),col='green',main="a^0.25")
+
+```
+
+#### QQ
+```{r}
+par(mfrow=c(2,2))
+
+# plot 1
+epsilonsLog = sort(epsilonsLog)
+N = length(epsilonsLog)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsLog
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsLog~theoreticalNormal))
+title('log(a)')
+
+
+# plot 2
+epsilonsHalf = sort(epsilonsHalf)
+N = length(epsilonsHalf)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsHalf
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsHalf~theoreticalNormal))
+title('a^0.5')
+
+
+# plot 3
+epsilonsThird = sort(epsilonsThird)
+N = length(epsilonsThird)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsThird
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsThird~theoreticalNormal))
+title('a^0.33')
+
+# plot 4
+epsilonsQuarter = sort(epsilonsQuarter)
+N = length(epsilonsQuarter)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsQuarter
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsQuarter~theoreticalNormal))
+title('a^0.25')
+
+#The residuals and qq plot are very similar between the four models. 
+```
+
+#### MLR
+
+```{r}
+modelMLR <- lm(data$y ~ data$x + data$a + data$b + data$c, data=data)
+
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+epsilons <- residuals(modelMLR)
+hist(epsilons,breaks=seq(-20,30,2),col='green',,main="MLR")
+
+epsilons = sort(epsilons)
+N = length(epsilons)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilons
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilons~theoreticalNormal))
+title('MLR')
+```
+
+#1. Does your MLR satisfy the LINE assumptions?
+# No
+
+#2. If not, what transforms do you recommend be applied to each explanatory variable and why?
+# Transform x to e^x and b to b^2 because the plots look so.
+
+#3. Transform the variable you feel most violates the LINE assumptions.
+
+```{r}
+modelMLR <- lm(data$y ~ exp(data$x) + data$a + data$b + data$c, data=data)
+
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+epsilons <- residuals(modelMLR)
+hist(epsilons,breaks=seq(-20,30,2),col='green',,main="MLR")
+
+epsilons = sort(epsilons)
+N = length(epsilons)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilons
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilons~theoreticalNormal))
+title('MLR')
+```
+
+#4. Does transforming this variable help? why or why not?
+# No. Other variables may need to be transformed as well. 
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
