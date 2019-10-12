@@ -1,0 +1,312 @@
+---
+title: "Lab11_Sec02"
+author: "Susan Khan"
+date: "10/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# LAB11
+
+## Data Transforms
+
+1. Read the Dataset "class11\_LAB\_dataFrame\_20190930T2158.csv" into a dataframe.
+2. The target variable is **y**
+
+```{r}
+library(readr)
+DataLab11 <- read_csv("class11_LAB_dataFrame_20190930T2158.csv")
+
+
+```
+#### Exploratory Data Analysis
+1. Plot y vs.
+   1. x
+   2. a
+   3. b
+   4. c
+   
+```{r}
+
+plot(DataLab11$x,DataLab11$y)
+plot(DataLab11$a, DataLab11$y)
+plot(DataLab11$b, DataLab11$y)
+plot(DataLab11$c, DataLab11$y)
+
+
+
+```
+
+Summarize the relationships between $y$ and the set of explanatory variables (x,a,b,c).
+
+```{r}
+# For relationship between x and y appears non linear and thus breaks the Linearity assumption.
+
+```
+
+#### Regression
+1. Please fit a simple linear regression model between **y** and **a**
+2. Make a scatter plot of **y** and **a**
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+
+```{r}
+model1= lm(y~a, data = DataLab11)
+plot(DataLab11$a, DataLab11$y)
+abline (model1)
+
+#There appears to be a very slight positive relationship between a and y. However, in reality all the data points are mostly clustured between 1.5 and 1.6. This breaks our equal variance assumption.
+
+```
+
+#### Transforms
+1. Transform **a** 4 different ways
+2. Fit a linear regression
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+
+```{r}
+options(repr.plot.width=7*1, repr.plot.height=7)
+par(mfrow=c(2,2))
+transformedA = log(DataLab11$a)
+plot(transformedA,DataLab11$y,xlab='log(a)',ylab='Y',tck = 0.02)
+model <- lm(y~log(a),data=DataLab11)
+
+predictions <- predict.lm(model,data.frame(a=DataLab11$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (DataLab11$a)^0.5
+plot(DataLab11$a^0.5,DataLab11$y,xlab='a^0.5',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.5),data=DataLab11)
+
+predictions <- predict.lm(model,data.frame(a=DataLab11$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (DataLab11$a)^0.333
+plot(DataLab11$a^0.333,DataLab11$y,xlab='a^1/3',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.333),data=DataLab11)
+
+predictions <- predict.lm(model,data.frame(a=DataLab11$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (DataLab11$a)^0.25
+plot(DataLab11$a^0.25,DataLab11$y,xlab='a^0.25',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.25),data=DataLab11)
+
+predictions <- predict.lm(model,data.frame(a=DataLab11$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+
+#there appears to be a slightly positive relationship between a and y even after transforming the variable a in 4 different ways.
+
+
+
+```
+
+#### Residuals
+1. Plot a histogram of the above 4 model residuals
+
+```{r}
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+modelLog <- lm(y~log(a),data=DataLab11)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog,col='green', main="log(a)")
+
+modelHalf <- lm(y~I(a^0.5),data=DataLab11)
+epsilonsHalf <- residuals(modelHalf)
+hist(epsilonsHalf, col='green',main="a^0.50")
+
+
+modelThird <- lm(y~I(a^0.33),data=DataLab11)
+epsilonsThird <- residuals(modelThird)
+hist(epsilonsThird,col='green',main="a^0.33")
+
+
+modelQuarter <- lm(y~I(a^0.25),data=DataLab11)
+epsilonsQuarter <- residuals(modelQuarter)
+hist(epsilonsQuarter, col='green',main="a^0.25")
+```
+
+#### QQ
+1. Plot a qqplot of the above 4 model residuals
+
+```{r}
+par(mfrow=c(2,2))
+
+# plot 1
+epsilonsLog = sort(epsilonsLog)
+N = length(epsilonsLog)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsLog
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsLog~theoreticalNormal))
+title('log')
+
+# plot 2
+epsilonsHalf = sort(epsilonsHalf)
+N = length(epsilonsHalf)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsHalf
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsHalf~theoreticalNormal))
+title('x^1/2')
+
+
+# plot 3
+epsilonsThird = sort(epsilonsThird)
+N = length(epsilonsThird)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsThird
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsThird~theoreticalNormal))
+
+
+# plot 4
+epsilonsQuarter = sort(epsilonsQuarter)
+N = length(epsilonsQuarter)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsQuarter
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsQuarter~theoreticalNormal))
+
+```
+
+How do the residuals and qq plot compare between your 4 different transforms?
+
+```{r}
+# write a comment
+
+#After computing the residual and qq plot of the 4 models, it appears that none of the data transformation satisfies the normality assumption.
+
+```
+
+#### MLR
+1. Please fit a multiple linear regression model between **y** and (**x**, **a**, **b**, **c**)
+2. Plot a histogram of the above 4 model residuals
+3. Plot a qqplot of the above 4 model residuals
+
+```{r}
+par(mfrow=c(2,2))
+
+MLRmodellog= lm(y~log(a)+x+b+c, data = DataLab11)
+epsilonsLog1 <- residuals(MLRmodellog)
+hist(epsilonsLog1, col='yellow',main="log(a)")
+
+
+MLRmodelhalf= lm(y~I(a^0.5)+x+b+c, data = DataLab11)
+epsilonshalf1 <- residuals(MLRmodelhalf)
+hist(epsilonshalf1, col='yellow',main="(a^0.5)")
+
+
+MLRmodelthird= lm(y~I(a^0.33)+x+b+c, data = DataLab11)
+epsilonsthird1 <- residuals(MLRmodelthird)
+hist(epsilonsthird1, col='yellow',main="(a^0.33)")
+
+MLRmodelquarter= lm(y~I(a^0.25)+x+b+c, data = DataLab11)
+epsilonsquarter1 <- residuals(MLRmodelquarter)
+hist(epsilonsquarter1, col='yellow',main="(a^0.25)")
+
+
+
+
+```
+
+```{r}
+
+par(mfrow=c(2,2))
+
+# plot 1
+epsilonsLog1 = sort(epsilonsLog1)
+N = length(epsilonsLog1)
+probs = seq(1,N)/(N+1)
+theoreticalNormal1 = qnorm(probs)
+
+plot(theoreticalNormal1,epsilonsLog1
+     ,xlab='Theoretical Normal1'
+     ,ylab='Empirical Normal1')
+abline(lm(epsilonsLog1~theoreticalNormal1))
+title('log')
+
+# plot 2
+epsilonshalf1 = sort(epsilonshalf1)
+N = length(epsilonshalf1)
+probs = seq(1,N)/(N+1)
+theoreticalNormal1 = qnorm(probs)
+
+plot(theoreticalNormal1,epsilonshalf1
+     ,xlab='Theoretical Normal1'
+     ,ylab='Empirical Normal1')
+abline(lm(epsilonshalf1~theoreticalNormal1))
+title('a^1/2')
+
+
+# plot 3
+epsilonsthird1 = sort(epsilonsthird1)
+N = length(epsilonsthird1)
+probs = seq(1,N)/(N+1)
+theoreticalNormal1 = qnorm(probs)
+
+plot(theoreticalNormal1,epsilonsthird1
+     ,xlab='Theoretical Normal1'
+     ,ylab='Empirical Normal1')
+abline(lm(epsilonsthird1~theoreticalNormal1))
+title('a^1/3')
+
+# plot 4
+epsilonsquarter1 = sort(epsilonsquarter1)
+N = length(epsilonsquarter1)
+probs = seq(1,N)/(N+1)
+theoreticalNormal1 = qnorm(probs)
+
+plot(theoreticalNormal1,epsilonsquarter1
+     ,xlab='Theoretical Normal1'
+     ,ylab='Empirical Normal1')
+abline(lm(epsilonsquarter1~theoreticalNormal1))
+title('a^1/4')
+
+```
+
+
+1. Does your MLR satisfy the LINE assumptions?
+2. If not, what transforms do you recommend be applied to each explanatory variable and why?
+3. Transform the variable you feel most violates the LINE assumptions.
+4. Does transforming this variable help? why or why not?
+
+```{r}
+
+MLRmodel= lm(y~a+x+b+c, data = DataLab11)
+plot(MLRmodel)
+#After computing the multiple linear regression including variables b, c and d, our model does not change at all. It does not meet the equal variance assumption because we see from the residual vs fitted plot that there is a clear pattern of the residuals. Additionally, from the normal q-q plot, the MLR model fails the normality assumption.
+
+MLRmodelTransform2= lm(y~I(x^0.5)+ log(a)+b+c, data = DataLab11)
+plot(MLRmodellog2)
+
+#After looking at the scatterplots above, I chose to transform x to x^0.5 and executed a log transformation on a. The results show that the residuals are spread across more evenly and the q-q plot shows that this transformed model fits the normality assumption much better.
+
+```
+
