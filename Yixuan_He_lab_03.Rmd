@@ -1,0 +1,244 @@
+---
+title: "Yixuan He lab 3"
+output: html_document
+---
+# LAB11
+
+## Data Transforms
+
+1. Read the Dataset "class11\_LAB\_dataFrame\_20190930T2158.csv" into a dataframe.
+2. The target variable is **y**
+
+#### Exploratory Data Analysis
+1. Plot y vs.
+   1. x
+   2. a
+   3. b
+   4. c
+
+Summarize the relationships between $y$ and the set of explanatory variables (x,a,b,c).
+
+```{r}
+print(getwd())
+data <- read.csv("./class11_LAB_dataFrame_20190930T2158.csv")
+
+plot(data$x,data$y)
+model1 <- lm(y~x,data=data)
+
+plot(data$a,data$y)
+model1 <- lm(y~a,data=data)
+
+plot(data$b,data$y)
+model1 <- lm(y~b,data=data)
+
+
+plot(data$c,data$y)
+model1 <- lm(y~c,data=data)
+```
+
+Explanatory variables a and c have a relatively linear relationship to $y$, even though the data related to a appear to be skewed and the data related to c have some outliers. Explanatory variables x and b don't seem to have a linear relationship to $y$.
+
+#### Regression
+1. Please fit a simple linear regression model between **y** and **a**
+2. Make a scatter plot of **y** and **a**
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+
+```{r}
+model1 <- lm(y~a,data=data)
+plot(data$a,data$y)
+lines(data$a,predict.lm(model1,data.frame(a=data$a)),col='red')
+```
+
+For majority of the data, the model seems to be predicting okay. It is a linear relationship, but the data is skewed with more than a few extreme outliers above the prediction line, which is the reason I think that makes the prediction not as accurate for some data below the prediction line.
+
+#### Transforms
+1. Transform **a** 4 different ways
+2. Fit a linear regression
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+
+```{r}
+options(repr.plot.width=7*1, repr.plot.height=7)
+par(mfrow=c(2,2))
+transformedA = log(data$a)
+plot(transformedA,data$y,xlab='log(a)',ylab='Y',tck = 0.02)
+model <- lm(y~log(a),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (data$a)^0.5
+plot(data$a^0.5,data$y,xlab='a^0.5',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.5),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (data$a)^0.333
+plot(data$a^0.333,data$y,xlab='a^1/3',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.333),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+
+transformedA = (data$a)^0.25
+plot(data$a^0.25,data$y,xlab='a^0.25',ylab='Y',tck = 0.02)
+model <- lm(y~I(a^0.25),data=data)
+
+predictions <- predict.lm(model,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+```
+
+The transformations don't seem to have done much to a, as the plots look similar to the original one. It's predicting okay and have outliers with large extreme $y$ value that drive the overall prediction model up.
+
+#### Residuals
+1. Plot a histogram of the above 4 model residuals
+
+```{r}
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+modelLog <- lm(y~log(a),data=data)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog,col='green',main="log(a)")
+
+modelHalf <- lm(y~I(a^0.5),data=data)
+epsilonsHalf <- residuals(modelHalf)
+hist(epsilonsHalf,col='green',main="a^0.50")
+
+
+modelThird <- lm(y~I(a^0.33),data=data)
+epsilonsThird <- residuals(modelThird)
+hist(epsilonsThird,col='green',main="a^0.33")
+
+
+modelQuarter <- lm(y~I(a^0.25),data=data)
+epsilonsQuarter <- residuals(modelQuarter)
+hist(epsilonsQuarter,col ='green',main="a^0.25")
+```
+
+
+#### QQ
+1. Plot a qqplot of the above 4 model residuals
+
+How do the residuals and qq plot compare between your 4 different transforms?
+
+```{r}
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+epsilonsLog = sort(epsilonsLog)
+N = length(epsilonsLog)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsLog
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsLog~theoreticalNormal))
+title('log')
+
+epsilonsHalf = sort(epsilonsHalf)
+N = length(epsilonsHalf)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsHalf
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsHalf~theoreticalNormal))
+title('x^1/2')
+
+epsilonsThird = sort(epsilonsThird)
+N = length(epsilonsThird)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsThird
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsThird~theoreticalNormal))
+title('x^1/3')
+
+epsilonsQuarter = sort(epsilonsQuarter)
+N = length(epsilonsQuarter)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsQuarter
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilonsQuarter~theoreticalNormal))
+title('x^1/4')
+```
+
+The QQ plots are very similar to each other, which tells me that the residual distributions are also similar.
+
+#### MLR
+1. Please fit a multiple linear regression model between **y** and (**x**, **a**, **b**, **c**)
+2. Plot a histogram of the above 4 model residuals
+3. Plot a qqplot of the above 4 model residuals
+
+For 2 and 3, I'm assuming you are asking for the residual plot and qqplot for the MLR. Otherwise it looks the same to me to the ones we did before this.
+
+```{r}
+model2 <- lm(y~x+a+b+c,data=data)
+
+epsilons2 <- residuals(model2)
+hist(epsilons2,col='green',main="MLR")
+
+epsilons2 = sort(epsilons2)
+N = length(epsilons2)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilons2
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilons2~theoreticalNormal))
+title('MLR')
+```
+
+1. Does your MLR satisfy the LINE assumptions?
+2. If not, what transforms do you recommend be applied to each explanatory variable and why?
+3. Transform the variable you feel most violates the LINE assumptions.
+4. Does transforming this variable help? why or why not?
+
+```{r}
+#3
+transformedX = exp(data$x)
+plot(transformedX,data$y,xlab='e^x',ylab='Y',tck = 0.02)
+model <- lm(y~exp(data$x),data=data)
+
+model3 <- lm(y~exp(data$x)+a+b+c,data=data)
+
+epsilons3 <- residuals(model3)
+hist(epsilons3,col='green',main="MLR")
+
+epsilons3 = sort(epsilons3)
+N = length(epsilons3)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilons3
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Normal')
+abline(lm(epsilons2~theoreticalNormal))
+title('MLR')
+```
+
+1. If exclusing extreme values, I think my MLR will actually satisfy the LINE assumptions. Now the equal variance assumption is in the air. But I don't think excluding data is one form of data transformation we are looking for here. So I am looking at the more linear fit part and transform from there.
+2. I think x most volates the LINE assumptions. I would recommend transform x into $e^x$ since the data appear to have a shape that matches the $e^x$ gragh.
+4. It does help correct the effect of the extreme outliers. However, we have another skewed data. This could be contributing to the non-normal distribution.
+
+### Resources
+https://github.com/mhc-stat340-f2019-sec02/class10/blob/master/dataTransformations.ipynb
