@@ -1,0 +1,140 @@
+---
+title: "Lab11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r eda}
+data <- read_csv("class11_LAB_dataFrame_20190930T2158.csv")
+ggplot(data, aes(x = a, y = y)) +
+  geom_point()
+ggplot(data, aes(x = b, y = y)) +
+  geom_point()
+ggplot(data, aes(x = c, y = y)) +
+  geom_point()
+ggplot(data, aes(x = x, y = y)) +
+  geom_point()
+```
+Y and A look like they have a flat line relationship for the most part. Most of the points are concentrated around the first quarter of the graph, and the spread is inconsistent.
+
+Y and B have a triangle shaped relationship, they increase together up to a point and then begin to decrease together. 
+
+Y and C looks similar to Y and B, but it is not curved at the bottom. The spread is very inconsistent because the points are very spread in the middle of the graph but at the ends there are fewer points and it is not as wide.
+
+Y and X appear to have an exponential relationship.
+
+```{r regression}
+fit0a <- lm(y~a, data)
+ggplot(data, aes(x = a, y = y))+
+  geom_smooth(method = "lm") + 
+  geom_point()
+
+summary(fit0a)
+
+summary(lm(y~b, data))
+
+```
+The predictive model is not going to be very good at predicting because the spread is horrible and it is bad. It will predict too close at the beginning and randomly wider at the end.
+
+```{r transform}
+data$sqrtA = (data$a)^0.5
+ggplot(data, aes(x = sqrtA, y = y)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+  
+data$invA = 1/(data$a)
+ggplot(data, aes(x = invA, y = y)) +
+geom_point() +
+geom_smooth(method = "lm")
+
+data$logA = log(data$a)
+ggplot(data, aes(x = logA, y = y)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+data$sqA = (data$a)^2
+ggplot(data, aes(x = sqA, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+fit1a <- lm(y ~ sqrtA, data)
+fit2a <- lm(y ~ invA, data)
+fit3a <- lm(y ~ logA, data)
+fit4a <- lm(y ~ sqA, data)
+```
+They all look about the same after being transformed. Maybe I did something wrong, but transforming did not help this model. 
+```{r residual}
+data$sqrter <- residuals(fit1a)
+data$inver <- residuals(fit2a)
+data$loger <- residuals(fit3a)
+data$sqer <- residuals(fit4a)
+
+ggplot(data, aes(x = sqrter)) +
+  geom_histogram(bins = 20)
+ggplot(data, aes(x = inver)) +
+  geom_histogram(bins = 20 )
+ggplot(data, aes(x = loger)) +
+  geom_histogram(bins = 20)
+ggplot(data, aes(x = sqer)) +
+  geom_histogram(bins = 20)
+
+```
+```{r qq}
+qqnorm(data$sqrter)
+qqnorm(data$inver)
+qqnorm(data$loger)
+qqnorm(data$sqer)
+```
+They all look the same!
+``` {r mlr}
+mlr <- lm(y ~ a + b + c + x, data)
+summary(mlr)
+data$mlrer <- residuals(mlr)
+
+ggplot(data, aes(x = mlrer)) +
+  geom_histogram(bins = 20)
+
+qqnorm(data$mlrer)
+```
+My mlr does not satisfy the LINE assumptions because x and b have a curvy relationship with y, so I will try to transform them. I am not sure what to do to them so I am just going to do a bunch and see if they look better.
+```{r transform}
+data$xtrans <- data$x
+
+ggplot(data, aes(x = xtrans, y = y)) +
+  geom_point()
+
+```
+```{r}
+data$btrans <- sqrt((data$b)^2)
+ggplot(data, aes(x = btrans, y = y)) +
+  geom_point()
+```
+```{r}
+mlr2 <- lm(y ~ a + btrans + c + x, data)
+summary(mlr2)
+data$mlrer2 <- residuals(mlr2)
+
+ggplot(data, aes(x = mlrer2)) +
+  geom_histogram(bins = 20)
+
+qqnorm(data$mlrer2)
+
+```
+
+Unfortunately it is too difficult to transform x so I think I made it even worse than before. It didn't help because the spread is still horrible and also there are negative values that can't be square rooted or log so I'm not really sure what to use to transform it. and squaring it makes it ugly. It is hard to interpret the meaning of the transformation i did to b to make it more linear. I tried but I'm not really sure!
+
+
+
+
+
+
+
+
+
+
