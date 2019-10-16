@@ -1,0 +1,174 @@
+---
+title: "LABtransform Amaya Choksi"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Exploratory Data Analysis
+
+```{r}
+dataset <- read.csv("class11_LAB_dataFrame_20190930T2158.csv")
+```
+
+```{r}
+par(mfrow=c(2,2))
+ggplot(dataset, aes(x=x, y=y)) + geom_point() + ggtitle('Graph of y vs x')
+ggplot(dataset, aes(x=a, y=y)) + geom_point() + ggtitle('Graph of y vs a')
+ggplot(dataset, aes(x=b, y=y)) + geom_point() + ggtitle('Graph of y vs b')
+ggplot(dataset, aes(x=c, y=y)) + geom_point() + ggtitle('Graph of y vs c')
+```
+
+The graphs of y~a and y~c appear to have a slight linear apppearance. the graphs of y~b and y~x seem to be quadratic and exponential respectively. 
+
+## Regression
+```{r }
+LinearModel <- lm(y~a, data=dataset)
+summary(LinearModel)
+ggplot(dataset, aes(x=a, y=y)) + geom_smooth(method=lm)+ geom_point() + ggtitle('Graph of y vs a')
+```
+
+
+The data points are centred around the line in the beginning, but towards the end they spread out, indicating that those points are far off from the value of the predicted points. 
+
+
+## Transforms
+```{r }
+options(repr.plot.width=7*1, repr.plot.height=7)
+par(mfrow=c(2,2))
+
+transformedA = log(dataset$a)
+plot(transformedA,dataset$y,xlab='log(a)',ylab='y',tck = 0.02)
+model1 <- lm(y~log(a),data=dataset)
+predictions <- predict.lm(model1,data.frame(a=dataset$a))
+lines(transformedA
+      ,predictions
+      ,col='green')
+
+transformedA = (dataset$a)^0.5
+plot(dataset$a^0.5,dataset$y,xlab='a^0.5',ylab='Y',tck = 0.02)
+model2 <- lm(y~I(a^0.5),data=dataset)
+predictions <- predict.lm(model2,data.frame(a=dataset$a))
+lines(transformedA
+      ,predictions
+      ,col='blue')
+
+transformedA = (dataset$a)^0.333
+plot(dataset$a^0.333,dataset$y,xlab='a^1/3',ylab='Y',tck = 0.02)
+model3 <- lm(y~I(a^0.333),data=dataset)
+predictions <- predict.lm(model3,data.frame(a=dataset$a))
+lines(transformedA
+      ,predictions
+      ,col='orange')
+
+transformedA = (dataset$a)^0.25
+plot(dataset$a^0.25,dataset$y,xlab='a^0.25',ylab='Y',tck = 0.02)
+model4 <- lm(y~I(a^0.25),data=dataset)
+predictions <- predict.lm(model4,data.frame(a=dataset$a))
+lines(transformedA
+      ,predictions
+      ,col='maroon')
+
+```
+
+
+It is evident that the transformations have not improved the data. In this case, a transformation would not be necessary. 
+
+
+##Residuals
+```{r }
+
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+modelLog <- lm(y~log(a),data=dataset)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog,breaks=seq(-20,30,2),col='green',main="log(a)")
+
+modelHalf <- lm(y~I(a^0.5),data=dataset)
+epsilonsHalf <- residuals(modelHalf)
+hist(epsilonsHalf,breaks=seq(-20,30,2),col='blue',main="a^0.50")
+
+modelThird <- lm(y~I(a^0.33),data=dataset)
+epsilonsThird <- residuals(modelThird)
+hist(epsilonsThird,breaks=seq(-20,30,2),col='orange',main="a^0.33")
+
+
+modelQuarter <- lm(y~I(a^0.25),data=dataset)
+epsilonsQuarter <- residuals(modelQuarter)
+hist(epsilonsQuarter,breaks=seq(-20,30,2),col='maroon',main="a^0.25")
+
+```
+
+
+The error distribution is very similar between all four transformations. All transformation's errors are between -20 and 20, and appear approximately symmetric around 0.
+
+##Q-Q
+```{r }
+par(mfrow=c(2,2))
+qqnorm(epsilonsLog)
+qqnorm(epsilonsHalf)
+qqnorm(epsilonsThird)
+qqnorm(epsilonsQuarter)
+
+```
+
+The histograms as well as the QQ plots, look similar between the 4 residual models.
+
+##Multiple Linear Regression
+```{r }
+MLR<- lm(y~x+a+b+c, data=dataset)
+summary(MLR)
+
+
+par(mfrow=c(2,2))
+MLR1 <- lm(y~x,data=dataset)
+MLRnew1 <- residuals(MLR1)
+plot(dataset$x,MLRnew1, tck=0.01)
+title('x')
+
+# plot 2
+MLR2 <- lm(y~a,data=dataset)
+MLRnew2 <- residuals(MLR2)
+plot(dataset$a,MLRnew2, tck=0.01)
+title('a')
+
+# plot 3
+MLR3 <- lm(y~b,data=dataset)
+MLRnew3 <- residuals(MLR3)
+plot(dataset$b,MLRnew3, tck=0.01)
+title('b')
+
+# plot 4
+MLR4 <- lm(y~c,data=dataset)
+MLRnew4 <- residuals(MLR3)
+plot(dataset$c,MLRnew4, tck=0.01)
+title('c')
+
+par(mfrow=c(2,2))
+hist(MLRnew1,breaks=seq(-25,25,2),col='pink',main="Residuals of x")
+hist(MLRnew1,breaks=seq(-25,25,2),col='pink',main="Residuals of a")
+hist(MLRnew1,breaks=seq(-25,25,2),col='pink',main="Residuals of b")
+hist(MLRnew1,breaks=seq(-25,25,2),col='pink',main="Residuals of c")
+
+```
+
+Linearity assummption does not fit. The residuals of y~x and y~b are not equaly spread. Since we do not know how the data was collected, we d not know whether the obseervations are independant of eachother, but we assume that they are. The histograms tell us that the data is spread normally. 
+
+The x looks the most skewed (especially at the tails), which is why I picked the X varibale for a transformation. 
+
+Using an exponential transformation, which improves the spread of the data to appear more linear. 
+
+
+```{r }
+transformedX = lm(y~I(exp(x)),data=dataset)
+NewXmodel <- lm(y~I(exp(x)),data=dataset)
+XModel <- residuals(NewXmodel)
+plot(dataset$x, XModel, tck=0.01)
+title('new X')
+```
+
