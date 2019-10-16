@@ -1,0 +1,251 @@
+## Data Transforms
+Name: Kaiwen Lu
+
+1. Read the Dataset "class11\_LAB\_dataFrame\_20190930T2158.csv" into a dataframe.
+2. The target variable is **y**
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(GGally) 
+library(gridExtra)
+data<-read.csv('class11_LAB_dataFrame_20190930T2158.csv')
+data<-data%>%select(x,a,b,c,y)
+```
+#### Exploratory Data Analysis
+1. Plot y vs.
+   1. x
+   2. a
+   3. b
+   4. c
+```{r}
+ggplot(data=data,mapping=aes(x=x,y=y) )+geom_point()
+ggplot(data=data,mapping=aes(x=a,y=y) )+geom_point()
+ggplot(data=data,mapping=aes(x=b,y=y) )+geom_point()
+ggplot(data=data,mapping=aes(x=c,y=y) )+geom_point()
+
+```
+
+#### Regression
+1. Please fit a simple linear regression model between **y** and **a**
+2. Make a scatter plot of **y** and **a**
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+The linear regression fits well for x values greater than 1.65 but under estimate y values for x values less than 1/2. The relationship between x and y appears non-linear. It breaks the L assumption. 
+```{r}
+model_a<-lm(y~a, data=data)
+summary(model_a)
+ggplot(data=data,mapping=aes(x=a,y=y) )+geom_point()+geom_smooth()
+
+
+```
+
+#### Transforms
+1. Transform **a** 4 different ways
+2. Fit a linear regression
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+There is some curveness in the fitted line and the transformation doesn't help much. 
+
+```{r}
+#log a
+logdata<-data %>% mutate(
+  log_a=log(a)
+  )
+log<-lm(y~log_a, data=logdata)
+ggplot(data=logdata,mapping=aes(x=log_a,y=y) )+geom_point()+geom_smooth()
+
+#sqrt a
+sqrtdata<-data%>% mutate(
+  sqrt_a=sqrt(a)
+)
+sqrt<-lm(y~sqrt_a,data=sqrtdata)
+ggplot(data=sqrtdata,mapping=aes(x=sqrt_a,y=y) )+geom_point()+geom_smooth()
+# 
+# #square a
+# sqdata<-data%>% mutate(
+#   sq_a=a^2
+# )
+# sq<-lm(y~sq_a,data=sqdata)
+# ggplot(data=sqdata,mapping=aes(x=sq_a,y=y) )+geom_point()+geom_smooth()
+
+#sqrt log a
+sqrtlogdata<-data %>% mutate(
+  sqrtlog_a=sqrt(log(a))
+  )
+sqrtlog<-lm(y~sqrtlog_a, data=sqrtlogdata)
+ggplot(data=sqrtlogdata,mapping=aes(x=sqrtlog_a,y=y) )+geom_point()+geom_smooth()
+
+#log log a
+loglogdata<-data %>% mutate(
+  loglog_a=log(log(a))
+  )
+loglog<-lm(y~loglog_a, data=loglogdata)
+ggplot(data=loglogdata,mapping=aes(x=loglog_a,y=y) )+geom_point()+geom_smooth()
+
+
+
+
+```
+
+#### Residuals
+1. Plot a histogram of the above 4 model residuals
+
+```{r}
+
+logdata <- logdata %>%
+mutate(
+residuals1 = residuals(log),
+fitted = predict(log)
+)
+ggplot(data = logdata, mapping = aes(x = residuals1)) +
+geom_histogram() +
+ggtitle("Residuals")
+
+sqrtdata <- sqrtdata %>%
+mutate(
+residuals2 = residuals(sqrt),
+fitted = predict(sqrt)
+)
+ggplot(data = sqrtdata , mapping = aes(x = residuals2)) +
+geom_histogram() +
+ggtitle("Residuals")
+
+sqrtlogdata <- sqrtlogdata %>%
+mutate(
+residuals3 = residuals(sqrtlog),
+fitted = predict(sqrtlog)
+)
+ggplot(data = sqrtlogdata, mapping = aes(x = residuals3)) +
+geom_histogram() +
+ggtitle("Residuals")
+
+loglogdata <- loglogdata %>%
+mutate(
+residuals4 = residuals(loglog),
+fitted = predict(loglog)
+)
+ggplot(data = loglogdata, mapping = aes(x = residuals4)) +
+geom_histogram() +
+ggtitle("Residuals")
+
+
+```
+
+
+#### QQ
+How do the residuals and qq plot compare between your 4 different transforms?
+The residuals and qq plots between my 4 different transformations are very similar. 
+```{r}
+ggplot(data = logdata, mapping = aes(sample = residuals1)) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = sqrtdata, mapping = aes(sample = residuals2)) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = sqrtlogdata, mapping = aes(sample = residuals3)) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = loglogdata, mapping = aes(sample = residuals4)) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+```
+
+
+
+#### MLR
+1. Does your MLR satisfy the LINE assumptions?
+(1) Linearity: The scatter plots between y and x,y,c all seem to violate the linearity. Transformation is needed.
+(2)Independence: We assume the observations are independent. 
+(3)Normal distributions of residuals: From the residuals plots and QQ plots, the models are approximately normally distributed.
+(4)Equal standard deviation: The standard deviation of the explanatory variables don't look equal from the plots. 
+
+2. If not, what transforms do you recommend be applied to each explanatory variable and why?
+For variable x, try exponentiate the x; For a and d, they look approximately linear so transformation does not help much. For c, try replacing x^2 with z since it looks like a parabola model. So that y=x^2=z. 
+
+3. Transform the variable you feel most violates the LINE assumptions.
+Transform x. 
+
+4. Does transforming this variable help? why or why not?
+Transforming this variable helps.The relationship between the transformed $x$ variable and $y$ appears linear and we would restore our L assumption.
+
+```{r}
+#Multiple linear regression model 
+MLR<-lm(y~x+a+b+c,data=data)
+summary(MLR)
+
+#Residuals 
+#Histogram of the above 4 model residuals 
+model_x<-lm(y~x,data=data)
+ggplot(data =data, mapping = aes(x =residuals(model_x))) +
+geom_histogram() +
+ggtitle("Residuals")
+
+ggplot(data = data, mapping = aes(x = residuals(model_a))) +
+geom_histogram() +
+ggtitle("Residuals")
+
+model_b<-lm(y~b,data=data)
+ggplot(data = data, mapping = aes(x = residuals(model_b))) +
+geom_histogram() +
+ggtitle("Residuals")
+
+model_c<-lm(y~c,data=data)
+ggplot(data = data, mapping = aes(x = residuals(model_c))) +
+geom_histogram() +
+ggtitle("Residuals")
+
+#A qqplot of the above 4 model residuals
+ggplot(data = data, mapping = aes(sample = residuals(model_x))) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = data, mapping = aes(sample = residuals(model_a))) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = data, mapping = aes(sample = residuals(model_b))) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+ggplot(data = data, mapping = aes(sample = residuals(model_c))) +
+stat_qq() +
+stat_qq_line() +
+ggtitle("Residuals Q-Q")
+
+#Equal variane 
+plot(data$x,residuals(model_x), tck=0.01)
+title('x')
+
+plot(data$a, residuals(model_a),tck=0.01)
+title('a')
+
+plot(data$b, residuals(model_b),tck=0.01)
+title('b')
+
+plot(data$c, residuals(model_c),tck=0.01)
+title('c')
+
+
+
+#Plot of MLR
+ggpairs(data)
+
+#Transform the variable x
+ggplot(aes(x=exp(x),y=y),data=data)+geom_point()
+
+
+
+
+```
+
