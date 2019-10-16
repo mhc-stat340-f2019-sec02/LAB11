@@ -1,0 +1,171 @@
+---
+title: "Lab 11"
+author: "Stephanie Spitzer"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv("class11_LAB_dataFrame_20190930T2158.csv")
+```
+
+## Explorartory Data Analysis
+```{r}
+plot(data$x, data$y)
+plot(data$a, data$y)
+plot(data$b, data$y)
+plot(data$c, data$y)
+```
+There appears to be a positive, non-linear relationship between y and x. Additionally, this relationship looks to be approximately exponential. There appears to be a weak negative linear relationship between y and a. The relationship between y and b appears to be negative and non-linear. Additionally, this relationship looks to be approximately quadratic. Finally, there does not appear to be a clear relationship between y and c. If there is some sort of relationship between y and c, I would say that it is positive and possibly linear, but there is no clear indiciation that it is linear. 
+
+## Regression
+```{r}
+plot(data$a, data$y)
+slr <- lm(y~a, data = data)
+lines(data$a, predict.lm(slr, data.frame(a=data$a)), col='red')
+```
+The lienar regression appears to both underestimate and overestimate many of the y values for values of a less than approximately 1.67. Additionally, the relationship between y and appears to be non-linear, which violates the linearity assumption. 
+
+##Transforms
+```{r}
+#Transformation 1
+transformedA = log(data$a)
+plot(transformedA, data$y, xlab='log(a)', ylab='Y')
+model <- lm(y~log(data$a), data = data)
+
+predictions <- predict.lm(model, data.frame(x=data$a))
+lines(transformedA, predictions, col='red')
+
+#Transformation 2
+transformedA = (data$a)^0.5
+plot(transformedA, data$y, xlab='a^1/2', ylab='Y')
+model <- lm(y~I(data$a^0.5), data = data)
+
+predictions <- predict.lm(model, data.frame(x=data$a))
+lines(transformedA, predictions, col='red')
+
+#Transformation 3
+transformedA = -cos(data$a)
+plot(transformedA, data$y, xlab='-cos(a)', ylab='Y')
+model <- lm(y~-cos(data$a), data = data)
+
+predictions <- predict.lm(model, data.frame(x=data$a))
+lines(transformedA, predictions, col='red')
+
+#Transformation 4
+transformedA = exp(data$a)
+plot(transformedA, data$y, xlab='e^a', ylab='Y', tck=0.02)
+model <- lm(y~exp(data$a), data = data)
+
+predictions <- predict.lm(model, data.frame(x=data$a))
+lines(transformedA, predictions, col='red')
+```
+From the above plots, it appears that none of these transformations are suitable for our data. In my opinion, the most accurate tranformation of the data that fits the regression, is the square root of a or the cosine of a. 
+
+##Residuals
+```{r}
+options(repr.plot.width = 8, repr.plot.height = 8)
+par(mfrow=c(2,2))
+
+#Transformation 1
+modelLog <- lm(y~log(data$a), data = data)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog, breaks=seq(-20,30,2), col='blue', main="log(a)")
+
+#Transformation 2
+modelSqrt <- lm(y~I(data$a^0.5), data = data)
+epsilonsSqrt <- residuals(modelSqrt)
+hist(epsilonsSqrt, breaks=seq(-20,30,2), col='blue', main="(a^0.5)")
+
+#Transformation 3
+modelCos <- lm(y~-cos(data$a), data = data)
+epsilonsCos <- residuals(modelCos)
+hist(epsilonsCos, breaks=seq(-20,30,2), col='blue', main="-cos(a)")
+
+#Transformation 4
+modelExp <- lm(y~-cos(data$a), data = data)
+epsilonsExp <- residuals(modelExp)
+hist(epsilonsExp, breaks=seq(-20,30,2), col='blue', main="exp(a)")
+```
+
+##QQ
+```{r}
+#Transformation 1
+epsilonsLog = sort(epsilonsLog)
+N = length(epsilonsLog)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsLog, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsLog~theoreticalNormal))
+title('log')
+
+#Transformation 2
+epsilonsSqrt = sort(epsilonsSqrt)
+N = length(epsilonsSqrt)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsSqrt, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsSqrt~theoreticalNormal))
+title('a^0.5')
+
+#Transformation 3
+epsilonsCos = sort(epsilonsCos)
+N = length(epsilonsCos)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsCos, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsCos~theoreticalNormal))
+title('-Cos')
+
+#Transformation 4
+epsilonsExp = sort(epsilonsExp)
+N = length(epsilonsExp)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsExp, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsExp~theoreticalNormal))
+title('Exp')
+```
+The error distributions between all four transformations are very similar. All of the transformation's errors are between -20 and 10, and appear slightly skewed right. From the QQ plots, all four transformations do not appear to follow the Normality assumption. It does appear that the closest transofrmation to Normal is the square root of a. Based on these plots, it is reasonable to assume that these transformations would violate the Normality assumption of linear regression. 
+
+##MLR
+```{r}
+mlr <- lm(y~a + b + c + x, data = data)
+
+epsilonsMLR <- residuals(mlr)
+hist(epsilonsMLR, breaks = seq(-15,20,1), col = 'blue', main = 'MLR')
+
+epsilonsMLR = sort(epsilonsMLR)
+N = length(epsilonsMLR)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsMLR, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsMLR~theoreticalNormal))
+title('MLR')
+```
+No, the MLR does not satisfy the LINE assumptions. Based on the above plots, this multiple linear regression appears to violate the Normality and linearity assumptions. I would recommend using a exponential transformation on x and a square root transformation on b. 
+
+```{r}
+mlr <- lm(y~a + I(b^0.5) + c + x, data = data)
+
+epsilonsMLR <- residuals(mlr)
+hist(epsilonsMLR, breaks = seq(-10,15, 1), col = 'blue', main = 'MLR')
+
+epsilonsMLR = sort(epsilonsMLR)
+N = length(epsilonsMLR)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal, epsilonsMLR, xlab='Theoretical Normal', ylab = 'Empirical Normal')
+abline(lm(epsilonsMLR~theoreticalNormal))
+title('MLR')
+```
+I chose to transform the explanatory variable b by using a square root transformation. This transformation helped with the normality of the residuals. When looking at the QQ plot, we see that the residuals now follow the Normality assumption more closely, with the exception of a few outliers. Additionally, when looking at the histogram of the residuals, we see that the residuals lie between -10 and 15, which is more condensed than the untransformed data. Also, the residuals are symmetric and centered around zero. This new transformed regression does follow the assumptions for linear regression more closely, but there would still need to be some additional transformations done on the explanatory variables, so that the regression better follows these assumptions. 
