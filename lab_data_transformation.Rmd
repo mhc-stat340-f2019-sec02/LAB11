@@ -1,0 +1,278 @@
+# LAB11
+title: "Lab11"
+author: "Yue Qiu"
+date: "10/11/2019"
+
+
+## Data Transforms
+
+1. Read the Dataset "class11\_LAB\_dataFrame\_20190930T2158.csv" into a dataframe.
+2. The target variable is **y**
+
+```{r}
+data <- read.csv("class11_LAB_dataFrame_20190930T2158.csv")
+```
+
+#### Exploratory Data Analysis
+1. Plot y vs.
+   1. x
+   2. a
+   3. b
+   4. c
+*Summarize the relationships between $y$ and the set of explanatory variables (x,a,b,c).
+
+```{r}
+plot(data$x,data$y)
+model1 <- lm(y~x,data=data)
+lines(data$x,predict.lm(model1,data.frame(x=data$x)),col='red')
+summary(model1)
+```
+The relationship between y and x is curvy and points are going upward.
+
+```{r}
+plot(data$a,data$y)
+model2 <- lm(y~a,data=data)
+lines(data$a,predict.lm(model2,data.frame(a=data$a)),col='red')
+summary(model2)
+```
+Most points are clustered on the left side, but overall the trend is going to the right side. Their relationship is linear but flat
+
+
+```{r}
+plot(data$b,data$y)
+model3 <- lm(y~b,data=data)
+lines(data$c,predict.lm(model3,data.frame(b=data$b)),col='red')
+summary(model3)
+```
+The relationship is slightly curved down. Points are spread out and it seems to have many outliers. Weaker sign of linear relationship.
+
+```{r}
+plot(data$c,data$y)
+model4 <- lm(y~c,data=data)
+lines(data$c,predict.lm(model4,data.frame(c=data$c)),col='red')
+summary(model4)
+```
+The relationship between y and c is lienar but flat. Points are spread out.
+
+
+#### Regression 
+1. Please fit a simple linear regression model between **y** and **a**
+2. Make a scatter plot of **y** and **a**
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+```{r}
+plot(data$a,data$y)
+model2 <- lm(y~a,data=data)
+lines(data$a,predict.lm(model2,data.frame(a=data$a)),col='red')
+summary(model2)
+```
+The predicted model is y=6.195a-4.641
+The distribution of this plot is not healthy because points are clustered on the left and may have outliers. So the model does not fit with the data of a.
+
+
+#### Transforms
+1. Transform **a** 4 different ways
+2. Fit a linear regression
+3. Overlay the regression line
+4. Comment on the predicted model versus ground truth
+
+```{r}
+transformedA = log(data$a)
+plot(transformedA,data$y,xlab='log(a)',ylab='Y',tck = 0.02)
+model1 <- lm(y~log(a),data=data)
+predictions <- predict.lm(model1,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+summary(model1)
+```
+
+```{r}
+transformedA = (data$x)^0.5
+plot(data$a^0.5,data$y,xlab='a^0.5',ylab='Y',tck = 0.02)
+model2 <- lm(y~I(a^0.5),data=data)
+predictions <- predict.lm(model2,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+summary(model2)
+```
+
+```{r}
+transformedA = (data$a)^0.333
+plot(data$a^0.333,data$y,xlab='a^1/3',ylab='Y',tck = 0.02)
+model3 <- lm(y~I(a^0.333),data=data)
+predictions <- predict.lm(model3,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+summary(model3)
+```
+
+```{r}
+transformedA = (data$a)^0.25
+plot(data$a^0.25,data$y,xlab='a^0.25',ylab='Y',tck = 0.02)
+model4 <- lm(y~I(a^0.25),data=data)
+predictions <- predict.lm(model4,data.frame(a=data$a))
+lines(transformedA
+      ,predictions
+      ,col='red')
+summary(model4)
+```
+It looks like the transformations above do not help with fitting a lienar model.
+
+#### Residuals
+1. Plot a histogram of the above 4 model residuals
+
+```{r}
+options(repr.plot.width=8, repr.plot.height=8)
+par(mfrow=c(2,2))
+
+modelLog <- lm(y~log(a),data=data)
+epsilonsLog <- residuals(modelLog)
+hist(epsilonsLog,col='green',,main="log(a)")
+
+modelHalf <- lm(y~I(a^0.5),data=data)
+epsilonsHalf <- residuals(modelHalf)
+hist(epsilonsHalf,col='green',main="a^0.50")
+
+modelThird <- lm(y~I(a^0.33),data=data)
+epsilonsThird <- residuals(modelThird)
+hist(epsilonsThird,col='green',main="a^0.33")
+
+modelQuarter <- lm(y~I(a^0.25),data=data)
+epsilonsQuarter <- residuals(modelQuarter)
+hist(epsilonsQuarter,col='green',main="a^0.25")
+```
+
+
+#### QQ
+1. Plot a qqplot of the above 4 model residuals
+```{r}
+normalSample <- rnorm(100,0,4)
+varSample <- var(normalSample)
+meanSample <- mean(normalSample)
+probs <- seq(1,100,1)/100 
+theoreticalNormals <- qnorm(probs,meanSample,varSample)
+plot(theoreticalNormals,sort(normalSample)
+     ,xlab='Theoretical Normal'
+     ,ylab='Empirical Distribution'
+     ,tck=0.01)
+data_QQ <- data.frame("sample" =sort(normalSample), "theory"=theoreticalNormals)
+model = lm(sample~theory,data=data_QQ[30:70,])
+abline(model,col='red')
+```
+
+
+```{r}
+par(mfrow=c(2,2))
+
+#log(a)
+epsilonsLog = sort(epsilonsLog)
+N = length(epsilonsLog)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilonsLog
+      ,xlab='Theoretical Normal'
+      ,ylab='Empirical Normal')
+abline(lm(epsilonsLog~theoreticalNormal))
+title('log(a)')
+
+#a^0.50
+epsilonsHalf = sort(epsilonsHalf)
+N = length(epsilonsHalf)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+plot(theoreticalNormal,epsilonsHalf
+      ,xlab='Theoretical Normal'
+      ,ylab='Empirical Normal')
+abline(lm(epsilonsHalf~theoreticalNormal))
+title('a^0.50')
+
+#a^0.33
+epsilonsThird = sort(epsilonsThird)
+N = length(epsilonsThird)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+plot(theoreticalNormal,epsilonsThird
+      ,xlab='Theoretical Normal'
+      ,ylab='Empirical Normal')
+abline(lm(epsilonsThird~theoreticalNormal))
+title('a^0.33')
+
+#a^0.25
+epsilonsQuarter = sort(epsilonsQuarter)
+N = length(epsilonsQuarter)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+plot(theoreticalNormal,epsilonsQuarter
+      ,xlab='Theoretical Normal'
+      ,ylab='Empirical Normal')
+abline(lm(epsilonsQuarter~theoreticalNormal))
+title('a^0.25')
+```
+
+How do the residuals and qq plot compare between your 4 different transforms?
+*Thesee four plot look very alike.
+
+
+#### MLR
+1. Please fit a multiple linear regression model between **y** and (**x**, **a**, **b**, **c**)
+```{r}
+MLR <- lm(y~x+a+b+c,data=data)
+
+plot(MLR)
+summary(MLR)
+```
+Predicted model: y=3x-1.29a-0.22b-0.22c+6.51
+
+2. Plot a histogram of the above 4 model residuals
+```{r}
+epsilons <- residuals(MLR)
+hist(epsilons, col='blue',main="(x,a,b,c)")
+```
+
+3. Plot a qqplot of the above 4 model residuals
+```{r}
+epsilons = sort(epsilons)
+N = length(epsilons)
+probs = seq(1,N)/(N+1)
+theoreticalNormal = qnorm(probs)
+
+plot(theoreticalNormal,epsilons
+      ,xlab='Theoretical Normal'
+      ,ylab='Empirical Normal')
+abline(lm(epsilons~theoreticalNormal))
+title('MLR')
+```
+
+
+1. Does your MLR satisfy the LINE assumptions?
+* No
+Linearity: NO
+Independent: not sure
+Normality: the QQ plot looks not bad, but has some outliers
+Equal Variance: the scatter plot of residuals shows the distribuiton does not have equal variance. It looks like curvy and has some extreme values. 
+  
+2. If not, what transforms do you recommend be applied to each explanatory variable and why?
+* x: either we fit a quadratic model, or we transform y to log(y) or -1/y
+  a: transformation to both x and y are necessary, but it's hard to make it linear
+  b: either we fit a quadratic model, or we transform y to y^2
+  c: we can try to trandform y to y^2
+
+3. Transform the variable you feel most violates the LINE assumptions.
+```{r}
+plot(exp(data$x),data$y,xlab='e^x',ylab='y',tck = 0.02)
+modelX <- lm(y~exp(x),data=data)
+predictions <- predict.lm(modelX,data.frame(x=data$x))
+lines(exp(data$x)
+       ,predictions
+       ,col='red')
+summary(modelX)
+```
+
+4. Does transforming this variable help? why or why not?
+The distribution looks more linear after this transformation.
+
+
